@@ -19,7 +19,7 @@ tools:
           local slackdetectionmethod="$6"
           local slackbusinessimpact="$7"
           local incident_id="$8"
-          local payload="{\"description\": \"$description</br><strong>Incident Commander:</strong> $slackincidentcommander</br><strong>Detection Method:</strong> $slackdetectionmethod</br><strong>Business Impact:</strong> $slackbusinessimpact</br><strong>Ticket Link:</strong> $incident_url\", \"subject\": \"TESTING $servicename - $title\", \"email\": \"devsecops@aenetworks.com\", \"priority\": 1, \"status\": 2, \"source\": 8, \"category\": \"DevOps\", \"sub_category\": \"Pageout\", \"tags\": [\"PDID_$incident_id\"]}"
+          local payload="{\"description\": \"$description</br><strong>Incident Commander:</strong>$slackincidentcommander</br><strong>Detection Method:</strong>$slackdetectionmethod</br><strong>Business Impact:</strong>$slackbusinessimpact</br><strong>Ticket Link:</strong>$incident_url\", \"subject\": \"TESTING $servicename - $title\", \"email\": \"devsecops@aenetworks.com\", \"priority\": 1, \"status\": 2, \"source\": 8, \"category\": \"DevOps\", \"sub_category\": \"Pageout\", \"tags\": [\"PDID_$incident_id\"]}"
           curl -u $FSAPI_SANDBOX:X -H "Content-Type: application/json" -X POST -d "$payload" -o response.json "$url"
       }
 
@@ -31,19 +31,16 @@ tools:
 
       # Main code
 
-      # Read the event file
-      event_file="$1"
-
-      # Extract information from the event file
-      slackdescription=$(jq -r '.slackdescription' "$event_file")
-      slackincidentcommander=$(jq -r '.slackincidentcommander' "$event_file")
-      slackdetectionmethod=$(jq -r '.slackdetectionmethod' "$event_file")
-      slackbusinessimpact=$(jq -r '.slackbusinessimpact' "$event_file")
-      servicename=$(jq -r '.servicename' "$event_file")
-      title=$(jq -r '.title' "$event_file")
-      incident_url=$(jq -r '.incident_url' "$event_file")
-      incident_id=$(jq -r '.incident_id' "$event_file")
-      bridge_url=$(jq -r '.bridge_url' "$event_file")
+      # Assign arguments to variables
+      slackdescription="$1"
+      slackincidentcommander="$2"
+      slackdetectionmethod="$3"
+      slackbusinessimpact="$4"
+      servicename="$5"
+      title="$6"
+      incident_url="$7"
+      incident_id="$8"
+      bridge_url="$9"
 
       # Create service ticket
       create_ticket "$slackdescription" "$servicename" "$title" "$incident_url" "$slackincidentcommander" "$slackdetectionmethod" "$slackbusinessimpact" "$incident_id"
@@ -78,8 +75,32 @@ tools:
       slack send-message '#kubiya_testing' "$MESSAGE"
 
     args:
-      event_file:
-        description: Path to the JSON file containing the event data
+      slackdescription:
+        description: Description of the incident from Slack
+        required: true
+      slackincidentcommander:
+        description: Name of the incident commander
+        required: true
+      slackdetectionmethod:
+        description: Method of incident detection
+        required: true
+      slackbusinessimpact:
+        description: Business impact of the incident
+        required: true
+      servicename:
+        description: Name of the service involved in the incident
+        required: true
+      title:
+        description: Title of the incident
+        required: true
+      incident_url:
+        description: URL of the incident
+        required: true
+      incident_id:
+        description: ID of the incident
+        required: true
+      bridge_url:
+        description: URL of the incident bridge
         required: true
     env:
-      - FSAPI_SANDBOX # The API key for Freshservice (injected automatically by Kubiya)
+      - FSAPI_SANDBOX
