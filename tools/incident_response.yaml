@@ -7,7 +7,6 @@ tools:
       import os
       import requests
       import json
-      import sys
 
       def create_ticket(description, servicename, title, incident_url, slackincidentcommander, slackdetectionmethod, slackbusinessimpact, incident_id):
           url = "https://aenetworks-fs-sandbox.freshservice.com/api/v2/tickets"
@@ -49,11 +48,15 @@ tools:
               print(f"Error sending Slack message: {response.status_code} - {response.text}")
           return response.json()
 
-      if len(sys.argv) != 10:
-          print("Usage: incident-response <slackdescription> <slackincidentcommander> <slackdetectionmethod> <slackbusinessimpact> <servicename> <title> <incident_url> <incident_id> <bridge_url>")
-          sys.exit(1)
-
-      slackdescription, slackincidentcommander, slackdetectionmethod, slackbusinessimpact, servicename, title, incident_url, incident_id, bridge_url = sys.argv[1:]
+      slackdescription = "{{.slackdescription}}"
+      slackincidentcommander = "{{.slackincidentcommander}}"
+      slackdetectionmethod = "{{.slackdetectionmethod}}"
+      slackbusinessimpact = "{{.slackbusinessimpact}}"
+      servicename = "{{.servicename}}"
+      title = "{{.title}}"
+      incident_url = "{{.incident_url}}"
+      incident_id = "{{.incident_id}}"
+      bridge_url = "{{.bridge_url}}"
 
       ticket_id = create_ticket(slackdescription, servicename, title, incident_url, slackincidentcommander, slackdetectionmethod, slackbusinessimpact, incident_id)
       ticket_url = f"https://aenetworks-fs-sandbox.freshservice.com/a/tickets/{ticket_id}"
