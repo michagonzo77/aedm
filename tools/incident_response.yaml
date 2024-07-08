@@ -1,7 +1,7 @@
 tools:
   - name: incident-response
     alias: incident-response
-    description: Update an SSO permission set with a new customer managed policy and provision the permission set, requires approval from an admin
+    description: Create a service ticket in Freshservice, extract the ticket ID, and send a formatted incident message to a Slack channel.
     type: bash
     content: |
       #!/usr/bin/env bash
@@ -109,4 +109,4 @@ tools:
         description: URL of the incident bridge
         required: true
     env:
-      - FSAPI_SANDBOX # The email address of the user requesting the operation (injected automatically by Kubiya)
+      - FSAPI_SANDBOX
