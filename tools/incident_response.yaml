@@ -30,11 +30,6 @@ tools:
       }
 
       # Main code
-      # Check if the event file is provided
-      if [ "$#" -ne 1 ]; then
-          echo "Usage: $0 <event_file>"
-          exit 1
-      fi
 
       # Read the event file
       event_file="$1"
