@@ -8,6 +8,7 @@ tools:
       import requests
       import json
       import time
+      import sqlite3
       from datetime import datetime, timedelta
       from fuzzywuzzy import process, fuzz
       from slack_sdk import WebClient
@@ -19,8 +20,7 @@ tools:
       SLACK_API_TOKEN = os.getenv("SLACK_API_TOKEN")
       SLACK_CHANNEL_ID = os.getenv("SLACK_CHANNEL_ID")
       SLACK_THREAD_TS = os.getenv("SLACK_THREAD_TS")
-      CACHE_FILE = "/sqlite_data/services_cache.json"
-      FIELDS_CACHE_FILE = "/sqlite_data/fields_cache.json"
+      CACHE_DB = "/sqlite_data/services_cache.db"
       CACHE_EXPIRY_HOURS = 24
       FUZZY_MATCH_THRESHOLD = 80
       REAL_TIME_BASE_URL = "https://rt.fastly.com"
@@ -34,31 +34,43 @@ tools:
           if os.getenv("KUBIYA_DEBUG"):
               print(message)
 
-      def load_cache(cache_file):
+      def load_cache():
           try:
-              if os.path.exists(cache_file):
-                  with open(cache_file, 'r') as f:
-                      cache_data = json.load(f)
-                      cache_timestamp = datetime.fromisoformat(cache_data['timestamp'])
-                      if datetime.utcnow() - cache_timestamp < timedelta(hours=CACHE_EXPIRY_HOURS):
-                          return cache_data['data']
+              conn = sqlite3.connect(CACHE_DB)
+              c = conn.cursor()
+              c.execute('''CREATE TABLE IF NOT EXISTS services_cache
+                           (timestamp text, services text)''')
+              c.execute("SELECT * FROM services_cache")
+              row = c.fetchone()
+              if row:
+                  cache_timestamp = datetime.fromisoformat(row[0])
+                  if datetime.utcnow() - cache_timestamp < timedelta(hours=CACHE_EXPIRY_HOURS):
+                      services = json.loads(row[1])
+                      conn.close()
+                      return services
+              conn.close()
           except Exception as e:
-              print(f"Error loading cache from {cache_file}: {e}")
+              print(f"Error loading cache from database: {e}")
           return None
 
-      def save_cache(cache_file, data):
+      def save_cache(services):
           try:
+              conn = sqlite3.connect(CACHE_DB)
+              c = conn.cursor()
+              c.execute("DELETE FROM services_cache")
               cache_data = {
                   'timestamp': datetime.utcnow().isoformat(),
-                  'data': data
+                  'services': json.dumps(services)
               }
-              with open(cache_file, 'w') as f:
-                  json.dump(cache_data, f)
+              c.execute("INSERT INTO services_cache (timestamp, services) VALUES (?, ?)", 
+                        (cache_data['timestamp'], cache_data['services']))
+              conn.commit()
+              conn.close()
           except Exception as e:
-              print(f"Error saving cache to {cache_file}: {e}")
+              print(f"Error saving cache to database: {e}")
 
       def list_services():
-          cached_services = load_cache(CACHE_FILE)
+          cached_services = load_cache()
           if cached_services:
               debug_print("Loaded services from cache.")
               return cached_services
@@ -90,7 +102,7 @@ tools:
           except requests.exceptions.RequestException as e:
               print(f"Error fetching services from Fastly API: {e}")
           
-          save_cache(CACHE_FILE, all_services)
+          save_cache(all_services)
           return all_services
 
       def construct_service_prefix(service_name, environment):
