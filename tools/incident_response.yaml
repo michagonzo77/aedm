@@ -2,80 +2,94 @@ tools:
   - name: incident-response
     alias: incident-response
     description: Create a service ticket in Freshservice, extract the ticket ID, and send a formatted incident message to a Slack channel.
-    type: bash
+    type: python
     content: |
-      #!/bin/bash
+      import os
+      import requests
+      import json
+      import sys
 
-      # Install necessary dependencies including Slack CLI
-      apk update > /dev/null && apk add -q wget unzip curl jq libc6-compat > /dev/null
-      wget -q https://downloads.slack-edge.com/slack-cli/slack-cli-linux-amd64.tgz -O /tmp/slack-cli.tgz && tar -xzf /tmp/slack-cli.tgz -C /usr/local/bin
+      def create_ticket(description, servicename, title, incident_url, slackincidentcommander, slackdetectionmethod, slackbusinessimpact, incident_id):
+          url = "https://aenetworks-fs-sandbox.freshservice.com/api/v2/tickets"
+          payload = {
+              "description": f"{description}<br><strong>Incident Commander:</strong>{slackincidentcommander}<br><strong>Detection Method:</strong>{slackdetectionmethod}<br><strong>Business Impact:</strong>{slackbusinessimpact}<br><strong>Ticket Link:</strong>{incident_url}",
+              "subject": f"TESTING {servicename} - {title}",
+              "email": "devsecops@aenetworks.com",
+              "priority": 1,
+              "status": 2,
+              "source": 8,
+              "category": "DevOps",
+              "sub_category": "Pageout",
+              "tags": [f"PDID_{incident_id}"]
+          }
+          headers = {
+              "Content-Type": "application/json"
+          }
+          response = requests.post(url, auth=(os.getenv('FSAPI_SANDBOX'), 'X'), headers=headers, data=json.dumps(payload))
+          response_data = response.json()
+          return response_data['ticket']['id']
 
-      # Function to create a service ticket
-      create_ticket() {
-          local url="https://aenetworks-fs-sandbox.freshservice.com/api/v2/tickets"
-          local description="$1"
-          local servicename="$2"
-          local title="$3"
-          local incident_url="$4"
-          local slackincidentcommander="$5"
-          local slackdetectionmethod="$6"
-          local slackbusinessimpact="$7"
-          local incident_id="$8"
-          local payload="{\"description\": \"$description</br><strong>Incident Commander:</strong>$slackincidentcommander</br><strong>Detection Method:</strong>$slackdetectionmethod</br><strong>Business Impact:</strong>$slackbusinessimpact</br><strong>Ticket Link:</strong>$incident_url\", \"subject\": \"TESTING $servicename - $title\", \"email\": \"devsecops@aenetworks.com\", \"priority\": 1, \"status\": 2, \"source\": 8, \"category\": \"DevOps\", \"sub_category\": \"Pageout\", \"tags\": [\"PDID_$incident_id\"]}"
-          curl -u $FSAPI_SANDBOX:X -H "Content-Type: application/json" -X POST -d "$payload" -o response.json "$url"
-      }
+      def send_slack_message(channel, message, thread_ts=None):
+          slack_payload = {
+              "channel": channel,
+              "text": message
+          }
+          if thread_ts:
+              slack_payload["thread_ts"] = thread_ts
 
-      # Function to extract ticket ID from response
-      extract_ticket_id() {
-          local ticket_id=$(jq -r '.ticket.id' response.json)
-          echo "$ticket_id"
-      }
+          response = requests.post(
+              "https://slack.com/api/chat.postMessage",
+              headers={
+                  'Content-Type': 'application/json',
+                  'Authorization': f'Bearer {os.getenv("SLACK_API_TOKEN")}'
+              },
+              json=slack_payload
+          )
+          if response.status_code != 200:
+              print(f"Error sending Slack message: {response.status_code} - {response.text}")
+          return response.json()
 
-      # Main code
+      if len(sys.argv) != 10:
+          print("Usage: incident-response <slackdescription> <slackincidentcommander> <slackdetectionmethod> <slackbusinessimpact> <servicename> <title> <incident_url> <incident_id> <bridge_url>")
+          sys.exit(1)
 
-      # Assign arguments to variables
-      slackdescription="$1"
-      slackincidentcommander="$2"
-      slackdetectionmethod="$3"
-      slackbusinessimpact="$4"
-      servicename="$5"
-      title="$6"
-      incident_url="$7"
-      incident_id="$8"
-      bridge_url="$9"
+      slackdescription, slackincidentcommander, slackdetectionmethod, slackbusinessimpact, servicename, title, incident_url, incident_id, bridge_url = sys.argv[1:]
 
-      # Create service ticket
-      create_ticket "$slackdescription" "$servicename" "$title" "$incident_url" "$slackincidentcommander" "$slackdetectionmethod" "$slackbusinessimpact" "$incident_id"
+      ticket_id = create_ticket(slackdescription, servicename, title, incident_url, slackincidentcommander, slackdetectionmethod, slackbusinessimpact, incident_id)
+      ticket_url = f"https://aenetworks-fs-sandbox.freshservice.com/a/tickets/{ticket_id}"
 
-      # Extract ticket ID
-      TICKET_ID=$(extract_ticket_id)
-
-      # Export TICKET_ID as an environment variable
-      export TICKET_ID
-
-      # Generate ticket URL
-      TICKET_URL="https://aenetworks-fs-sandbox.freshservice.com/a/tickets/$TICKET_ID"
-
-      # Format the message
-      MESSAGE=$(cat <<EOF
+      message = f"""
       ************** SEV 1 ****************
       @U074TSUMZEJ
-      Incident Commander: $slackincidentcommander
-      Detection Method: $slackdetectionmethod
-      Business Impact: $slackbusinessimpact
-      Bridge Link: <$bridge_url|Bridge Link>
-      Pagerduty Incident URL: $incident_url
-      FS Ticket URL: $TICKET_URL
+      Incident Commander: {slackincidentcommander}
+      Detection Method: {slackdetectionmethod}
+      Business Impact: {slackbusinessimpact}
+      Bridge Link: <{bridge_url}|Bridge Link>
+      Pagerduty Incident URL: {incident_url}
+      FS Ticket URL: {ticket_url}
       We will keep everyone posted on this channel as we assess the issue further.
-      EOF
-      )
-
-      # Export MESSAGE as an environment variable
-      export MESSAGE
+      """
 
       # Send the message to the Slack channel
-      slack send-message '#kubiya_testing' "$MESSAGE"
+      response = send_slack_message('#kubiya_testing', message)
 
+      # Send the message in the thread
+      if 'ts' in response:
+          thread_ts = response['ts']
+          thread_message = f"""
+          ************** SEV 1 ****************
+          Incident Commander: {slackincidentcommander}
+          Detection Method: {slackdetectionmethod}
+          Business Impact: {slackbusinessimpact}
+          Bridge Link: <{bridge_url}|Bridge Link>
+          Pagerduty Incident URL: {incident_url}
+          FS Ticket URL: {ticket_url}
+          We will keep everyone posted on this channel as we assess the issue further.
+          """
+          send_slack_message('#kubiya_testing', thread_message, thread_ts)
+
+    dependencies: |
+      requests
     args:
       slackdescription:
         description: Description of the incident from Slack
@@ -105,4 +119,5 @@ tools:
         description: URL of the incident bridge
         required: true
     env:
-      - FSAPI_SANDBOX
+      - FSAPI_SANDBOX # The API key for Freshservice (injected automatically by Kubiya)
+      - SLACK_API_TOKEN # The Slack API token for sending messages (injected automatically by Kubiya)
