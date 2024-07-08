@@ -57,13 +57,14 @@ tools:
       incident_url = "{{.incident_url}}"
       incident_id = "{{.incident_id}}"
       bridge_url = "{{.bridge_url}}"
+      slack_user_id = "<@U074TSUMZEJ>"  # Replace with the actual Slack user ID
 
       ticket_id = create_ticket(slackdescription, servicename, title, incident_url, slackincidentcommander, slackdetectionmethod, slackbusinessimpact, incident_id)
       ticket_url = f"https://aenetworks-fs-sandbox.freshservice.com/a/tickets/{ticket_id}"
 
       message = f"""
       ************** SEV 1 ****************
-      @michael.gonzalez@aenetworks.com
+      {slack_user_id}
       Incident Commander: {slackincidentcommander}
       Detection Method: {slackdetectionmethod}
       Business Impact: {slackbusinessimpact}
@@ -75,21 +76,6 @@ tools:
 
       # Send the message to the Slack channel
       response = send_slack_message('#kubiya_testing', message)
-
-      # Send the message in the thread
-      if 'ts' in response:
-          thread_ts = response['ts']
-          thread_message = f"""
-          ************** SEV 1 ****************
-          Incident Commander: {slackincidentcommander}
-          Detection Method: {slackdetectionmethod}
-          Business Impact: {slackbusinessimpact}
-          Bridge Link: <{bridge_url}|Bridge Link>
-          Pagerduty Incident URL: {incident_url}
-          FS Ticket URL: {ticket_url}
-          We will keep everyone posted on this channel as we assess the issue further.
-          """
-          send_slack_message('#kubiya_testing', thread_message, thread_ts)
 
     dependencies: |
       requests
