@@ -4,7 +4,7 @@ tools:
     description: Create a service ticket in Freshservice, extract the ticket ID, and send a formatted incident message to a Slack channel.
     type: bash
     content: |
-      #!/usr/bin/env bash
+      #!/bin/bash
 
       # Function to create a service ticket
       create_ticket() {
@@ -77,9 +77,6 @@ tools:
       # Send the message to the Slack channel
       slack send-message '#kubiya_testing' "$MESSAGE"
 
-    dependencies: |
-      boto3
-      requests
     args:
       slackdescription:
         description: Description of the incident from Slack
