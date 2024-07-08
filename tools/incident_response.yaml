@@ -6,6 +6,8 @@ tools:
     content: |
       #!/bin/bash
 
+      apk update > /dev/null && apk add -q wget unzip curl jq libc6-compat > /dev/null
+
       # Function to create a service ticket
       create_ticket() {
           local url="https://aenetworks-fs-sandbox.freshservice.com/api/v2/tickets"
