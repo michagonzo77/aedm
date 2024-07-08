@@ -77,13 +77,3 @@ variable "environment_variables" {
   description = "Additional environment variables"
   type        = map(string)
 }
-
-variable "approving_users" {
-  description = "List of users who can approve"
-  type        = list(string)
-}
-
-variable "approval_slack_channel" {
-  description = "Slack channel for approval notifications"
-  type        = string
-}

@@ -27,17 +27,10 @@ resource "kubiya_agent" "agent" {
   links        = var.links
   tool_sources = var.agent_tool_sources
   
-  environment_variables = merge(
-    {
-      LOG_LEVEL = var.log_level
-    },
-    var.debug ? { DEBUG = "1", KUBIYA_DEBUG = "1" } : {},
-    var.environment_variables,
-    {
-      APPROVING_USERS        = join(",", var.approving_users)
-      APPROVAL_SLACK_CHANNEL = var.approval_slack_channel
-    }
-  )
+  environment_variables = {    
+    DEBUG            = "1"
+    LOG_LEVEL        = "INFO"
+  }
 }
 
 output "agent" {
