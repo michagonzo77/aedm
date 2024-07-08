@@ -63,7 +63,7 @@ tools:
 
       message = f"""
       ************** SEV 1 ****************
-      @Michael Gonzalez
+      @michael.gonzalez@aenetworks.com
       Incident Commander: {slackincidentcommander}
       Detection Method: {slackdetectionmethod}
       Business Impact: {slackbusinessimpact}
