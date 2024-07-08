@@ -9,7 +9,7 @@ tools:
       import json
 
       def create_ticket(description, servicename, title, incident_url, slackincidentcommander, slackdetectionmethod, slackbusinessimpact, incident_id):
-          url = "https://aenetworks-fs-sandbox.freshservice.com/api/v2/tickets"
+          url = "https://aenetworks.freshservice.com/api/v2/tickets"
           payload = {
               "description": f"{description}<br><strong>Incident Commander:</strong>{slackincidentcommander}<br><strong>Detection Method:</strong>{slackdetectionmethod}<br><strong>Business Impact:</strong>{slackbusinessimpact}<br><strong>Ticket Link:</strong>{incident_url}",
               "subject": f"TESTING {servicename} - {title}",
@@ -24,7 +24,7 @@ tools:
           headers = {
               "Content-Type": "application/json"
           }
-          response = requests.post(url, auth=(os.getenv('FSAPI_SANDBOX'), 'X'), headers=headers, data=json.dumps(payload))
+          response = requests.post(url, auth=(os.getenv('FSAPI_PROD'), 'X'), headers=headers, data=json.dumps(payload))
           response_data = response.json()
           return response_data['ticket']['id']
 
@@ -57,14 +57,23 @@ tools:
       incident_url = "{{.incident_url}}"
       incident_id = "{{.incident_id}}"
       bridge_url = "{{.bridge_url}}"
-      slack_user_id = "<@U074TSUMZEJ>"  # Replace with the actual Slack user ID
+
+      slack_users = [
+          "<@U04JCDSHS76>", # Jeff McGrath
+          "<@U04J2MTMRFD>", # Kevin Keeler
+          "<@U04FZPQSY3H>", # Tapan Shah
+          "<@U048QRBV2NA>", # Neeraj Mendiratta
+          "<@U04UKPX585S>", # John DiSpirito
+          "<@U02SSCGCQQ6>"  # Sebastian Marjanovic
+      ]
+      slack_user_mentions = ' '.join(slack_users)
 
       ticket_id = create_ticket(slackdescription, servicename, title, incident_url, slackincidentcommander, slackdetectionmethod, slackbusinessimpact, incident_id)
-      ticket_url = f"https://aenetworks-fs-sandbox.freshservice.com/a/tickets/{ticket_id}"
+      ticket_url = f"https://aenetworks.freshservice.com/a/tickets/{ticket_id}"
 
       message = f"""
       ************** SEV 1 ****************
-      {slack_user_id}
+      {slack_user_mentions}
       Incident Commander: {slackincidentcommander}
       Detection Method: {slackdetectionmethod}
       Business Impact: {slackbusinessimpact}
@@ -108,5 +117,5 @@ tools:
         description: URL of the incident bridge
         required: true
     env:
-      - FSAPI_SANDBOX # The API key for Freshservice (injected automatically by Kubiya)
+      - FSAPI_PROD # The API key for Freshservice (injected automatically by Kubiya)
       - SLACK_API_TOKEN # The Slack API token for sending messages (injected automatically by Kubiya)
