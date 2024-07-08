@@ -6,7 +6,9 @@ tools:
     content: |
       #!/bin/bash
 
+      # Install necessary dependencies including Slack CLI
       apk update > /dev/null && apk add -q wget unzip curl jq libc6-compat > /dev/null
+      wget -q https://downloads.slack-edge.com/slack-cli/slack-cli-linux-amd64.tgz -O /tmp/slack-cli.tgz && tar -xzf /tmp/slack-cli.tgz -C /usr/local/bin
 
       # Function to create a service ticket
       create_ticket() {
