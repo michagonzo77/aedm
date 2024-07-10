@@ -5,7 +5,7 @@ agent_instructions = <<EOT
 You are an intelligent agent designed to retrieve realtime stats of Fastly services.
 EOT
 llm_model          = "azure/gpt-4o"
-agent_image        = "kubiya/base-agent:tools-v4"
+agent_image        = "kubiya/base-agent:tools-v5"
 
 secrets            = ["FASTLY_API_TOKEN"]
 integrations       = ["slack"]
