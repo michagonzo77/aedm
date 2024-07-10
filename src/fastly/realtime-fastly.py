@@ -4,7 +4,6 @@ import requests
 import json
 import time
 import sqlite3
-import argparse
 from datetime import datetime, timedelta
 from fuzzywuzzy import process, fuzz
 from slack_sdk import WebClient
@@ -366,7 +365,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Realtime stats for Fastly service.')
-    parser.add_argument('environment', type=str, choices=['production', 'dev', 'qa'], help='The environment to monitor (production, dev, qa)')
-    parser.add_argument('service_name', type=str, help='The name of the Fastly service to monitor')
+    parser.add_argument('--environment', type=str, choices=['production', 'dev', 'qa'], help='The environment to monitor (production, dev, qa)')
+    parser.add_argument('--service_name', type=str, help='The name of the Fastly service to monitor')
 
     args = parser.parse_args()
