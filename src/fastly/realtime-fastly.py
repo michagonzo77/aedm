@@ -22,6 +22,7 @@ REAL_TIME_BASE_URL = "https://rt.fastly.com"
 BASE_URL = "https://api.fastly.com"
 DEFAULT_STREAM_DURATION = 60
 DEFAULT_WAIT_INTERVAL = 1
+FASTLY_DASHBOARD_HISTORICAL_URL = "https://manage.fastly.com/observability/dashboard/system/overview/historic/{service_id}?range={range}&region=all"
 FASTLY_DASHBOARD_REALTIME_URL = "https://manage.fastly.com/observability/dashboard/system/overview/realtime/{service_id}?range={range}"
 COMMON_FIELDS = ["status_5xx", "requests", "hits", "miss", "all_pass_requests"]
 
@@ -167,6 +168,13 @@ def update_slack_message(channel, ts, blocks, text="Updated message from script"
             client.chat_update(channel=channel, ts=ts, blocks=blocks, text=text)
     except SlackApiError as e:
         print(f"Error updating message on Slack: {e.response['error']}")
+
+def delete_slack_message(channel, ts):
+    client = WebClient(token=SLACK_API_TOKEN)
+    try:
+        client.chat_delete(channel=channel, ts=ts)
+    except SlackApiError as e:
+        print(f"Error deleting message on Slack: {e.response['error']}")
 
 def generate_dashboard_url(service_id, range_str):
     return FASTLY_DASHBOARD_REALTIME_URL.format(service_id=service_id, range=range_str)
@@ -369,3 +377,5 @@ if __name__ == "__main__":
     parser.add_argument('--service_name', type=str, help='The name of the Fastly service to monitor')
 
     args = parser.parse_args()
+    
+    main(environment=args.environment, service_name=args.service_name)
