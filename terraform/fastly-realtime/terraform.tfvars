@@ -14,10 +14,7 @@ groups             = ["Admin"]
 agent_tool_sources = ["https://github.com/michagonzo77/aedm"]
 links              = []
 log_level = "INFO"
-environment_variables = {
-    KUBIYA_TOOL_TIMEOUT = "5m"
-    KUBIYA_DEBUG = "1" 
-}
+environment_variables = {}
 starters = [
     {
       name = "📈 RT Overview - Yoga Prod"
