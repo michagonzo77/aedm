@@ -7,8 +7,8 @@ platforms=("android" "androidtv" "appletv" "firetv" "ios" "kepler" "roku" "tizen
 # Define the services and their IDs
 declare -A services
 services["dev-yoga"]="28NWcDuK7eJuohc8s3bxwr"
-services["qa-yoga"]="29I6lUZbicNV0kVv07zN7V"
-services["prod-yoga"]="2AAgt7ZaOboH1ftYfE1Fxu"
+services["qa-yoga"]="test"
+services["prod-yoga"]="test"
 
 # Check if enough arguments are provided
 if [ $# -lt 2 ]; then
