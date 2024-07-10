@@ -46,7 +46,7 @@ tools:
 
       # Run the script
       export PYTHONPATH="${PYTHONPATH}:/${REPO_DIR}/${SOURCE_CODE_DIR}"
-      exec python approval/destroy_resources.py --request_id "{{ .request_id }}"
+      exec python fastly/fastly_realtime_monitor.py --environment "{{ .environment }}" --service_name "{{ .service_name }}"
     args:
       - name: environment
         description: The environment to monitor (production, dev, qa)
