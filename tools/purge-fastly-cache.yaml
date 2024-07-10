@@ -1,0 +1,59 @@
+# This file contains the tool definitions for the approval calling logic
+tools:
+  - name: fastly-cache-clear
+    image: python:3.11
+    description: Purge cache for selected services by brand, platform or operation. It can clear the cache of either dev, qa, or production yoga.
+    alias: fastly-cache-clear
+    content: |
+      # Set default values for environment variables
+      REPO_URL="${REPO_URL:-https://github.com/michagonzo77/aedm}"
+      REPO_NAME="${REPO_NAME:-aedm}"
+      SOURCE_CODE_DIR="${SOURCE_CODE_DIR:-/src}"
+      REPO_BRANCH="${REPO_BRANCH:-main}"
+      REPO_DIR="${REPO_DIR:-$REPO_NAME}"
+      BIN_DIR="${BIN_DIR:-/usr/local/bin}"
+      APT_CACHE_DIR="${APT_CACHE_DIR:-/var/cache/apt/archives}"
+      PIP_CACHE_DIR="${PIP_CACHE_DIR:-/var/cache/pip}"
+      
+      # Create cache directories
+      mkdir -p "$APT_CACHE_DIR"
+      mkdir -p "$BIN_DIR"
+      mkdir -p "$PIP_CACHE_DIR"
+
+      install_git() {
+        apt-get update -qq > /dev/null && apt-get install -y -qq git > /dev/null
+      }
+
+      # Install git
+      install_git
+
+      # Clone repository if not already cloned
+      if [ ! -d "$REPO_DIR" ]; then
+        git clone --branch "$REPO_BRANCH" "$REPO_URL" "$REPO_DIR" > /dev/null
+      fi
+
+      # cd into the cloned repo
+      cd "${REPO_DIR}/${SOURCE_CODE_DIR}"
+
+      # Install pip dependencies
+      install_pip_dependencies
+
+      # Run the script
+      chmod +x ./fastly/purge-fastly-cache.sh
+      exec ./fastly/purge-fastly-cache.sh --service_name "{{ .service_name }}" --brand_or_platform_or_operation "{{ .brand_or_platform_or_operation }}"
+    args:
+      - name: service_name
+        description: The name of the Fastly service to cache clear (dev-yoga, qa-yoga, or prod-yoga)
+        required: true
+      - name: brand_or_platform_or_operation
+        description: |
+          The brand, platform, or operation to perform cache clear. Available options include brands: aenetworks, aetv, biography, crimecentral, crimeandinvestigation, fyi, history, historyvault, historyvaultca, lifetime, lifetimemovies, lmc; and platforms: android, androidtv, appletv, firetv, ios, kepler, roku, tizen, tvos, vizio, web, webos, weblanding, xclass.
+        required: true
+    env:
+      - FASTLY_API_TOKEN
+      - SLACK_API_TOKEN
+      - SLACK_CHANNEL_ID
+      - SLACK_THREAD_TS
+    with_volumes:
+      - name: sqlite_data
+        path: /sqlite_data
