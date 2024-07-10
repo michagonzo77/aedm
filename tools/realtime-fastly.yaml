@@ -7,7 +7,7 @@ tools:
     content: |
       # Set default values for environment variables
       REPO_URL="${REPO_URL:-https://github.com/michagonzo77/aedm}"
-      REPO_NAME="${REPO_NAME:-terraform-modules}"
+      REPO_NAME="${REPO_NAME:-aedm}"
       SOURCE_CODE_DIR="${SOURCE_CODE_DIR:-src}"
       REPO_BRANCH="${REPO_BRANCH:-main}"
       REPO_DIR="${REPO_DIR:-$REPO_NAME}"
