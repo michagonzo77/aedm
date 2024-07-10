@@ -48,10 +48,10 @@ tools:
       export PYTHONPATH="${PYTHONPATH}:/${REPO_DIR}/${SOURCE_CODE_DIR}"
       exec python approval/destroy_resources.py --request_id "{{ .request_id }}"
     args:
-      environment:
+      - name: environment
         description: The environment to monitor (production, dev, qa)
         required: true
-      service_name:
+      - name: service_name
         description: The name of the Fastly service to monitor
         required: true
     env:
