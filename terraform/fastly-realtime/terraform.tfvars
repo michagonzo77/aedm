@@ -13,8 +13,10 @@ users              = []
 groups             = ["Admin"]
 agent_tool_sources = ["https://github.com/michagonzo77/aedm"]
 links              = []
+log_level = "INFO"
 environment_variables = {
-    "KUBIYA_TOOL_TIMEOUT" = "90s"
+    KUBIYA_TOOL_TIMEOUT = "5m"
+    KUBIYA_DEBUG = "1" 
 }
 starters = [
     {
@@ -43,4 +45,4 @@ starters = [
 // Debug mode will enable additional logging, and will allow visibility on Slack (if configured) as part of the conversation
 // Very useful for debugging and troubleshooting
 // DO NOT USE IN PRODUCTION
-debug = false
+debug = true

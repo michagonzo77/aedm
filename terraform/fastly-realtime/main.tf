@@ -28,10 +28,13 @@ resource "kubiya_agent" "agent" {
   starters     = var.starters
   tool_sources = var.agent_tool_sources
   
-  environment_variables = {    
-    DEBUG            = "1"
-    LOG_LEVEL        = "INFO"
-  }
+  environment_variables = merge(
+    {
+      LOG_LEVEL               = var.log_level
+      KUBIYA_TOOL_TIMEOUT     = "5m"
+    },
+    var.debug ? { KUBIYA_DEBUG = "1" } : {}
+  )
 }
 
 output "agent" {
