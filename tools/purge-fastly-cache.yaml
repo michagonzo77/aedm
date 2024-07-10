@@ -35,9 +35,6 @@ tools:
       # cd into the cloned repo
       cd "${REPO_DIR}/${SOURCE_CODE_DIR}"
 
-      # Install pip dependencies
-      install_pip_dependencies
-
       # Run the script
       chmod +x ./fastly/purge-fastly-cache.sh
       exec ./fastly/purge-fastly-cache.sh --service_name "{{ .service_name }}" --brand_or_platform_or_operation "{{ .brand_or_platform_or_operation }}"
