@@ -13,7 +13,9 @@ users              = []
 groups             = ["Admin"]
 agent_tool_sources = ["https://github.com/michagonzo77/aedm"]
 links              = []
-environment_variables = {}
+environment_variables = {
+    "KUBIYA_TOOL_TIMEOUT" = "90s"
+}
 starters = [
     {
       name = "📈 RT Overview - Yoga Prod"

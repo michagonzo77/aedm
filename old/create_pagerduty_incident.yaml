@@ -1,0 +1,182 @@
+tools:
+  - name: create-pagerduty-incident
+    alias: create-pd-incident
+    description: Create a new incident in PagerDuty, generate a Teams bridge line, create a FreshService ticket, and send a SEV1 message to the Slack channel.
+    type: python
+    content: |
+      import os
+      import requests
+      import json
+
+      def get_teams_meeting_link():
+          def get_access_token():
+              url = f"https://login.microsoftonline.com/{os.getenv('AZURE_TENANT_ID')}/oauth2/v2.0/token"
+              payload = {
+                  "client_id": os.getenv('AZURE_CLIENT_ID'),
+                  "scope": "https://graph.microsoft.com/.default",
+                  "client_secret": os.getenv('AZURE_CLIENT_SECRET'),
+                  "grant_type": "client_credentials"
+              }
+              response = requests.post(url, data=payload)
+              return response.json().get('access_token')
+
+          def create_meeting(access_token):
+              url = "https://graph.microsoft.com/v1.0/users/d69debf1-af1f-493f-8837-35747e55ea0f/onlineMeetings"
+              start_time = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+              end_time = (datetime.utcnow() + timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+              payload = {
+                  "startDateTime": start_time,
+                  "endDateTime": end_time
+              }
+              headers = {
+                  "Authorization": f"Bearer {access_token}",
+                  "Content-Type": "application/json"
+              }
+              response = requests.post(url, headers=headers, json=payload)
+              return response.json().get('joinUrl')
+
+          access_token = get_access_token()
+          return create_meeting(access_token)
+
+      def create_pagerduty_incident(description, user_email):
+          url = "https://api.pagerduty.com/incidents"
+          payload = {
+              "incident": {
+                  "type": "incident",
+                  "title": "Major Incident via Kubi",
+                  "service": {
+                      "id": "PAGERDUTY_SERVICE_ID",  # Replace with your PagerDuty service ID
+                      "type": "service_reference"
+                  },
+                  "body": {
+                      "type": "incident_body",
+                      "details": description
+                  }
+              }
+          }
+          headers = {
+              "Content-Type": "application/json",
+              "Authorization": f"Token token={os.getenv('PAGERDUTY_API_TOKEN')}",
+              "From": user_email
+          }
+          response = requests.post(url, headers=headers, json=payload)
+          response_data = response.json()
+          return response_data['incident']['id'], response_data['incident']['html_url']
+
+      def create_ticket(description, servicename, title, incident_url, slackincidentcommander, slackdetectionmethod, slackbusinessimpact):
+          url = "https://aenetworks-fs-sandbox.freshservice.com/api/v2/tickets"
+          payload = {
+              "description": f"{description}<br><strong>Incident Commander:</strong>{slackincidentcommander}<br><strong>Detection Method:</strong>{slackdetectionmethod}<br><strong>Business Impact:</strong>{slackbusinessimpact}<br><strong>Ticket Link:</strong>{incident_url}",
+              "subject": f"TESTING {servicename} - {title}",
+              "email": "devsecops@aenetworks.com",
+              "priority": 1,
+              "status": 2,
+              "source": 8,
+              "category": "DevOps",
+              "sub_category": "Pageout",
+              "tags": [f"PDID_{incident_id}"]
+          }
+          headers = {
+              "Content-Type": "application/json"
+          }
+          response = requests.post(url, auth=(os.getenv('FSAPI_SANDBOX'), 'X'), headers=headers, data=json.dumps(payload))
+          response_data = response.json()
+          return response_data['ticket']['id']
+
+      def send_slack_message(channel, message):
+          slack_payload = {
+              "channel": channel,
+              "text": message
+          }
+
+          response = requests.post(
+              "https://slack.com/api/chat.postMessage",
+              headers={
+                  'Content-Type': 'application/json',
+                  'Authorization': f'Bearer {os.getenv("SLACK_API_TOKEN")}'
+              },
+              json=slack_payload
+          )
+          if response.status_code != 200:
+              print(f"Error sending Slack message: {response.status_code} - {response.text}")
+
+      from datetime import datetime, timedelta
+
+      description = "{{.description}}"
+      user_email = os.getenv('KUBIYA_USER_EMAIL')
+      slackincidentcommander = "{{.slackincidentcommander}}"
+      slackdetectionmethod = "{{.slackdetectionmethod}}"
+      slackbusinessimpact = "{{.slackbusinessimpact}}"
+      servicename = "{{.servicename}}"
+      title = "{{.title}}"
+
+      # Create Teams bridge line
+      bridge_url = get_teams_meeting_link()
+
+      # Create PagerDuty incident
+      pd_incident_id, pd_incident_url = create_pagerduty_incident(description, user_email)
+
+      # Create FreshService ticket
+      ticket_id = create_ticket(description, servicename, title, pd_incident_url, slackincidentcommander, slackdetectionmethod, slackbusinessimpact)
+      ticket_url = f"https://aenetworks-fs-sandbox.freshservice.com/a/tickets/{ticket_id}"
+
+      slack_users = [
+          "<@U04JCDSHS76>", # Jeff McGrath
+          "<@U04J2MTMRFD>", # Kevin Keeler
+          "<@U04FZPQSY3H>", # Tapan Shah
+          "<@U048QRBV2NA>", # Neeraj Mendiratta
+          "<@U04UKPX585S>", # John DiSpirito
+          "<@U02SSCGCQQ6>"  # Sebastian Marjanovic
+      ]
+      slack_user_mentions = ' '.join(slack_users)
+
+      # Create SEV1 message
+      message = f"""
+      ************** SEV 1 ****************
+      {slack_user_mentions}
+      Incident Commander: {slackincidentcommander}
+      Detection Method: {slackdetectionmethod}
+      Business Impact: {slackbusinessimpact}
+      Bridge Link: <{bridge_url}|Bridge Link>
+      PagerDuty Incident URL: {pd_incident_url}
+      FS Ticket URL: {ticket_url}
+      We will keep everyone posted on this channel as we assess the issue further.
+      """
+
+      # Send the message to the Slack channel
+      send_slack_message('#incident_response', message)
+
+      print("Please go to the #incident_response channel to find the SEV1 announcement. The bridge line and pertinent details have been posted there. Thank you.")
+
+    dependencies: |
+      requests
+    args:
+      description:
+        description: Description of the incident
+        required: true
+      slackincidentcommander:
+        description: Name of the incident commander
+        required: true
+      slackdetectionmethod:
+        description: Method of incident detection
+        required: true
+      slackbusinessimpact:
+        description: Business impact of the incident
+        required: true
+      servicename:
+        description: Name of the service involved in the incident
+        required: true
+      title:
+        description: Title of the incident
+        required: true
+      confirmed:
+        description: By default this is false unless the user approves the execution which then changes this to true. Do not pass true unless the user has seen what is going to be run first.
+        required: false
+    env:
+      - KUBIYA_USER_EMAIL # The email of the user requesting access (injected automatically by Kubiya)
+      - FSAPI_SANDBOX # The API key for Freshservice (injected automatically by Kubiya)
+      - SLACK_API_TOKEN # The Slack API token for sending messages (injected automatically by Kubiya)
+      - PAGERDUTY_API_TOKEN # The PagerDuty API token for creating incidents
+      - AZURE_TENANT_ID # The Azure tenant ID for generating Teams bridge line
+      - AZURE_CLIENT_ID # The Azure client ID for generating Teams bridge line
+      - AZURE_CLIENT_SECRET # The Azure client secret for generating Teams bridge line
