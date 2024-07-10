@@ -37,7 +37,7 @@ tools:
 
       # Run the script
       chmod +x ./fastly/purge-fastly-cache.sh
-      exec ./fastly/purge-fastly-cache.sh --service_name "{{ .service_name }}" --brand_or_platform_or_operation "{{ .brand_or_platform_or_operation }}"
+      exec ./fastly/purge-fastly-cache.sh "{{ .service_name }}" "{{ .brand_or_platform_or_operation }}"
     args:
       - name: service_name
         description: The name of the Fastly service to cache clear (dev-yoga, qa-yoga, or prod-yoga)
