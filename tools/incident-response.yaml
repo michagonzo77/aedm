@@ -23,8 +23,18 @@ tools:
         apt-get update -qq > /dev/null && apt-get install -y -qq git > /dev/null
       }
 
-      # Install git
+      install_jq() {
+        apt-get update -qq > /dev/null && apt-get install -y -qq jq > /dev/null
+      }
+
+      install_slacksdk() {
+        pip install slack-sdk --cache-dir "$PIP_CACHE_DIR" --quiet > /dev/null
+      }
+
+      # Install git and jq and slacksdk
       install_git
+      install_jq
+      install_slacksdk
 
       # Function to install pip dependencies if not cached
       install_pip_dependencies() {
