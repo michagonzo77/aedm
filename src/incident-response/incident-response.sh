@@ -66,7 +66,7 @@ TICKET_URL="https://aenetworks-fs-sandbox.freshservice.com/a/tickets/$TICKET_ID"
 # Format the message
 MESSAGE=$(cat <<EOF
 ************** SEV 1 ****************
-@U074TSUMZEJ
+<@U074TSUMZEJ>
 Incident Commander: $slackincidentcommander
 Detection Method: $slackdetectionmethod
 Business Impact: $slackbusinessimpact
