@@ -10,3 +10,4 @@ python-dotenv
 requests_cache
 python-Levenshtein==0.25.1
 slack_sdk
+jq
