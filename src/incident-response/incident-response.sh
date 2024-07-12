@@ -21,6 +21,13 @@ extract_ticket_id() {
     echo "$ticket_id"
 }
 
+# Function to send a message to Slack
+send_slack_message() {
+    local channel="$1"
+    local message="$2"
+    curl -X POST -H 'Content-type: application/json' --data "{\"channel\":\"$channel\",\"text\":\"$message\"}" "https://slack.com/api/chat.postMessage" -H "Authorization: Bearer $SLACK_API_TOKEN"
+}
+
 # Parse command-line arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -73,5 +80,5 @@ EOF
 # Export MESSAGE as an environment variable
 export MESSAGE
 
-# Send the message to the Slack channel
-slack send-message '#kubiya-michaelg-test' "$MESSAGE"
+# Send the message to the Slack channel using the Slack API
+send_slack_message "#kubiya-michaelg-test" "$MESSAGE"
