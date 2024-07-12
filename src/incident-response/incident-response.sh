@@ -24,44 +24,25 @@ extract_ticket_id() {
 # Parse command-line arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --event_file) event_file="$2"; shift ;;
+        --description) description="$2"; shift ;;
+        --servicename) servicename="$2"; shift ;;
+        --title) title="$2"; shift ;;
+        --incident_url) incident_url="$2"; shift ;;
+        --slackincidentcommander) slackincidentcommander="$2"; shift ;;
+        --slackdetectionmethod) slackdetectionmethod="$2"; shift ;;
+        --slackbusinessimpact) slackbusinessimpact="$2"; shift ;;
+        --incident_id) incident_id="$2"; shift ;;
+        --bridge_url) bridge_url="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
 done
 
 # Check for required arguments
-if [ -z "${event_file}" ]; then
-    echo "Usage: $0 --event_file <event_file>"
+if [ -z "${description}" ] || [ -z "${servicename}" ] || [ -z "${title}" ] || [ -z "${incident_url}" ] || [ -z "${slackincidentcommander}" ] || [ -z "${slackdetectionmethod}" ] || [ -z "${slackbusinessimpact}" ] || [ -z "${incident_id}" ] || [ -z "${bridge_url}" ]; then
+    echo "Usage: $0 --description <description> --servicename <servicename> --title <title> --incident_url <incident_url> --slackincidentcommander <slackincidentcommander> --slackdetectionmethod <slackdetectionmethod> --slackbusinessimpact <slackbusinessimpact> --incident_id <incident_id> --bridge_url <bridge_url>"
     exit 1
 fi
-
-# Main code
-# Check if a file is provided as an argument
-if [ -z "$event_file" ]; then
-    echo "Usage: $0 --event_file <event_file>"
-    exit 1
-fi
-
-# Read JSON input from the file
-event_data=$(< "$event_file")
-
-# Ensure the event_data is valid JSON
-if ! jq empty <<< "$event_data"; then
-    echo "Invalid JSON data in $event_file"
-    exit 1
-fi
-
-# Extract necessary fields from the JSON data
-description=$(jq -r '.slackdescription' <<< "$event_data")
-servicename=$(jq -r '.servicename' <<< "$event_data")
-title=$(jq -r '.title' <<< "$event_data")
-incident_url=$(jq -r '.incident_url' <<< "$event_data")
-slackincidentcommander=$(jq -r '.slackincidentcommander' <<< "$event_data")
-slackdetectionmethod=$(jq -r '.slackdetectionmethod' <<< "$event_data")
-slackbusinessimpact=$(jq -r '.slackbusinessimpact' <<< "$event_data")
-incident_id=$(jq -r '.incident_id' <<< "$event_data")
-bridge_url=$(jq -r '.bridge_url' <<< "$event_data")
 
 # Create service ticket
 create_ticket "$description" "$servicename" "$title" "$incident_url" "$slackincidentcommander" "$slackdetectionmethod" "$slackbusinessimpact" "$incident_id"

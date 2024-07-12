@@ -1,7 +1,7 @@
 tools:
   - name: incident-response
     image: python:3.11
-    description: Create a service ticket in Freshservice based on event data from a JSON file and send a Slack message with incident details, freshservice ticket details, and teams bridge link.
+    description: Create a service ticket in Freshservice and send a Slack message with incident details, Freshservice ticket details, and a Teams bridge link.
     alias: incident-response
     content: |
       # Set default values for environment variables
@@ -36,10 +36,34 @@ tools:
 
       # Run the script
       chmod +x ./incident-response/incident-response.sh
-      exec ./incident-response/incident-response.sh --event_file "{{ .event_file }}"
+      exec ./incident-response/incident-response.sh --description "{{ .description }}" --servicename "{{ .servicename }}" --title "{{ .title }}" --incident_url "{{ .incident_url }}" --slackincidentcommander "{{ .slackincidentcommander }}" --slackdetectionmethod "{{ .slackdetectionmethod }}" --slackbusinessimpact "{{ .slackbusinessimpact }}" --incident_id "{{ .incident_id }}" --bridge_url "{{ .bridge_url }}"
     args:
-      - name: event_file
-        description: The path to the JSON file containing the event data.
+      - name: description
+        description: The description of the incident.
+        required: true
+      - name: servicename
+        description: The name of the service.
+        required: true
+      - name: title
+        description: The title of the incident.
+        required: true
+      - name: incident_url
+        description: The URL of the incident.
+        required: true
+      - name: slackincidentcommander
+        description: The Slack ID of the incident commander.
+        required: true
+      - name: slackdetectionmethod
+        description: The method of detection for the incident.
+        required: true
+      - name: slackbusinessimpact
+        description: The business impact of the incident.
+        required: true
+      - name: incident_id
+        description: The ID of the incident.
+        required: true
+      - name: bridge_url
+        description: The URL of the bridge.
         required: true
     env:
       - FSAPI_SANDBOX
