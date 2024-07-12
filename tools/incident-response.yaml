@@ -32,12 +32,6 @@ tools:
         apt-get install -y -qq slack > /dev/null
       }
 
-      # Function to install pip dependencies if not cached
-      install_pip_dependencies() {
-        export PIP_CACHE_DIR="$PIP_CACHE_DIR"
-        pip install -r requirements.txt --cache-dir "$PIP_CACHE_DIR" --quiet > /dev/null
-      }
-
       # Install git, jq, and slack CLI
       install_git
       install_jq
@@ -50,9 +44,6 @@ tools:
 
       # cd into the cloned repo
       cd "${REPO_DIR}/${SOURCE_CODE_DIR}"
-
-      # Install pip dependencies
-      install_pip_dependencies
 
       # Run the script
       chmod +x ./incident-response/incident-response.sh
