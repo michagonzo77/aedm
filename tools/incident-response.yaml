@@ -23,14 +23,25 @@ tools:
         apt-get update -qq > /dev/null && apt-get install -y -qq git > /dev/null
       }
 
+      install_jq() {
+        apt-get update -qq > /dev/null && apt-get install -y -qq jq > /dev/null
+      }
+
+      install_slack_cli() {
+        curl -s https://packagecloud.io/install/repositories/slacktechnologies/slack/script.deb.sh | bash > /dev/null
+        apt-get install -y -qq slack > /dev/null
+      }
+
       # Function to install pip dependencies if not cached
       install_pip_dependencies() {
         export PIP_CACHE_DIR="$PIP_CACHE_DIR"
         pip install -r requirements.txt --cache-dir "$PIP_CACHE_DIR" --quiet > /dev/null
       }
 
-      # Install git
+      # Install git, jq, and slack CLI
       install_git
+      install_jq
+      install_slack_cli
 
       # Clone repository if not already cloned
       if [ ! -d "$REPO_DIR" ]; then
