@@ -1,0 +1,51 @@
+tools:
+  - name: create-freshservice-ticket
+    image: python:3.11
+    description: Create a service ticket in Freshservice based on event data from a JSON file and send a Slack message.
+    alias: create-freshservice-ticket
+    content: |
+      # Set default values for environment variables
+      REPO_URL="${REPO_URL:-https://github.com/michagonzo77/aedm}"
+      REPO_NAME="${REPO_NAME:-aedm}"
+      SOURCE_CODE_DIR="${SOURCE_CODE_DIR:-/src}"
+      REPO_BRANCH="${REPO_BRANCH:-main}"
+      REPO_DIR="${REPO_DIR:-$REPO_NAME}"
+      BIN_DIR="${BIN_DIR:-/usr/local/bin}"
+      APT_CACHE_DIR="${APT_CACHE_DIR:-/var/cache/apt/archives}"
+      PIP_CACHE_DIR="${PIP_CACHE_DIR:-/var/cache/pip}"
+      
+      # Create cache directories
+      mkdir -p "$APT_CACHE_DIR"
+      mkdir -p "$BIN_DIR"
+      mkdir -p "$PIP_CACHE_DIR"
+
+      install_git() {
+        apt-get update -qq > /dev/null && apt-get install -y -qq git > /dev/null
+      }
+
+      # Install git
+      install_git
+
+      # Clone repository if not already cloned
+      if [ ! -d "$REPO_DIR" ]; then
+        git clone --branch "$REPO_BRANCH" "$REPO_URL" "$REPO_DIR" > /dev/null
+      fi
+
+      # cd into the cloned repo
+      cd "${REPO_DIR}/${SOURCE_CODE_DIR}"
+
+      # Run the script
+      chmod +x ./incident-response/incident-response.sh
+      exec ./incident-response/incident-response.sh --event_file "{{ .event_file }}"
+    args:
+      - name: event_file
+        description: The path to the JSON file containing the event data.
+        required: true
+    env:
+      - FSAPI_SANDBOX
+      - SLACK_API_TOKEN
+      - SLACK_CHANNEL_ID
+      - SLACK_THREAD_TS
+    with_volumes:
+      - name: sqlite_data
+        path: /sqlite_data

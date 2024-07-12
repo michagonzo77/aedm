@@ -5,7 +5,7 @@ agent_instructions = <<EOT
 You are an intelligent agent targeted for incident response management.
 EOT
 llm_model          = "azure/gpt-4o"
-agent_image        = "kubiya/base-agent:tools-v4"
+agent_image        = "kubiya/base-agent:tools-v5"
 
 secrets            = ["FSAPI_SANDBOX"]
 integrations       = ["slack"]
