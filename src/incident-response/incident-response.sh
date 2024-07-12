@@ -93,4 +93,4 @@ EOF
 export MESSAGE
 
 # Send the message to the Slack channel
-slack send-message '#kubiya_testing' "$MESSAGE"
+slack send-message '#kubiya-michaelg-test' "$MESSAGE"

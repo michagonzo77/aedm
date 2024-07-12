@@ -1,8 +1,8 @@
 tools:
-  - name: create-freshservice-ticket
+  - name: incident-response
     image: python:3.11
-    description: Create a service ticket in Freshservice based on event data from a JSON file and send a Slack message.
-    alias: create-freshservice-ticket
+    description: Create a service ticket in Freshservice based on event data from a JSON file and send a Slack message with incident details, freshservice ticket details, and teams bridge link.
+    alias: incident-response
     content: |
       # Set default values for environment variables
       REPO_URL="${REPO_URL:-https://github.com/michagonzo77/aedm}"
