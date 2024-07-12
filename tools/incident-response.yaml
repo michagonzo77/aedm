@@ -26,6 +26,15 @@ tools:
       # Install git
       install_git
 
+      # Function to install pip dependencies if not cached
+      install_pip_dependencies() {
+        export PIP_CACHE_DIR="$PIP_CACHE_DIR"
+        pip install -r requirements.txt --cache-dir "$PIP_CACHE_DIR" --quiet > /dev/null
+      }
+
+      # Install pip dependencies
+      install_pip_dependencies
+
       # Clone repository if not already cloned
       if [ ! -d "$REPO_DIR" ]; then
         git clone --branch "$REPO_BRANCH" "$REPO_URL" "$REPO_DIR" > /dev/null
